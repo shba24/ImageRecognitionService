@@ -10,11 +10,15 @@ import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.cloud.awsappservicerunning.config.AwsConfig;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public class SQSRepositoryImpl implements SQSRepository {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(SQSRepositoryImpl.class);
 
   @Autowired
   private AwsConfig awsConfig;
@@ -33,7 +37,11 @@ public class SQSRepositoryImpl implements SQSRepository {
   @Override
   public String createQueue(String queueName) {
     String queueUrl = getQueue(queueName);
-    if (queueUrl!=null) return queueUrl;
+    if (queueUrl!=null) {
+      LOGGER.debug("Using existing SQS queue");
+      return queueUrl;
+    }
+    LOGGER.info("Creating the SQS queue");
     CreateQueueRequest create_request = new CreateQueueRequest().withQueueName(queueName);
     try {
       queueUrl = awsConfig.amazonSQS().createQueue(create_request).getQueueUrl();
@@ -45,6 +53,7 @@ public class SQSRepositoryImpl implements SQSRepository {
 
   @Override
   public void sendMessage(String queueUrl, String messageBody, Map<String, MessageAttributeValue> messageAttributes) {
+    LOGGER.debug("Sending the message to SQS Queue");
     SendMessageRequest request = new SendMessageRequest()
         .withQueueUrl(queueUrl)
         .withMessageBody(messageBody)
@@ -59,6 +68,7 @@ public class SQSRepositoryImpl implements SQSRepository {
 
   @Override
   public Message receiveMessage(String queueUrl, Integer visibilityTimeout) {
+    LOGGER.debug("Receiving the message from SQS Queue");
     Message message = null;
     ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl)
         .withMaxNumberOfMessages(1)
@@ -76,6 +86,7 @@ public class SQSRepositoryImpl implements SQSRepository {
 
   @Override
   public void deleteMessage(String queueUrl, Message message) {
+    LOGGER.debug("Deleting the message from SQS Queue");
     DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest(queueUrl, message.getReceiptHandle());
     try {
       awsConfig.amazonSQS().deleteMessage(deleteMessageRequest);

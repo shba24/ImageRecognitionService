@@ -7,11 +7,15 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public class S3RepositoryImpl implements S3Repository {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(S3RepositoryImpl.class);
 
   @Autowired
   private AwsConfig awsConfig;
@@ -20,6 +24,7 @@ public class S3RepositoryImpl implements S3Repository {
   public void createBucket(String bucketName) {
     if (!awsConfig.amazonS3().doesBucketExistV2(bucketName)) {
       try {
+        LOGGER.info("Creating S3 bucket");
         awsConfig.amazonS3().createBucket(bucketName);
       } catch (Exception e) {
         e.printStackTrace();
@@ -32,6 +37,7 @@ public class S3RepositoryImpl implements S3Repository {
     String filePath = null;
     createBucket(bucketName);
     try {
+      LOGGER.debug("Downloading object from S3 bucket");
       S3Object imageObject = awsConfig.amazonS3().getObject(
           bucketName,
           key);
@@ -55,6 +61,7 @@ public class S3RepositoryImpl implements S3Repository {
       byte[] content = value.getBytes(StandardCharsets.UTF_8);
       ObjectMetadata data = new ObjectMetadata();
       data.setContentLength(content.length);
+      LOGGER.debug("Inserting object into S3 bucket");
       awsConfig.amazonS3().putObject(
           bucketName,
           key,

@@ -12,11 +12,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class DeepLearningServiceImpl implements DeepLearningService {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(DeepLearningServiceImpl.class);
 
   @Autowired
   private SQSRepository sqsRepository;
@@ -28,6 +32,7 @@ public class DeepLearningServiceImpl implements DeepLearningService {
   private EC2Repository ec2Repository;
 
   private String runDeepLearningAlgorithm(String imagePath) {
+    LOGGER.debug("Running the deep learning model");
     String output = "NA";
     Process p;
     try {
@@ -37,7 +42,10 @@ public class DeepLearningServiceImpl implements DeepLearningService {
       BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
       String temp = br.readLine();
       if (temp != null) {
-        output = temp.split(",")[1];
+        String[] tokens = temp.split(",");
+        if (tokens.length > 1) {
+          output = tokens[1];
+        }
       }
       p.destroy();
       Files.deleteIfExists(Path.of(imagePath));

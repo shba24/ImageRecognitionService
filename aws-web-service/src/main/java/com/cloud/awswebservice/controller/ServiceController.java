@@ -1,6 +1,8 @@
 package com.cloud.awswebservice.controller;
 
 import com.cloud.awswebservice.service.ImageRecognitionService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.http.HttpStatus;
@@ -17,13 +19,15 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/")
 public class ServiceController {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(ServiceController.class);
+
   @Autowired
   private ImageRecognitionService imageRecognitionService;
 
   @PostMapping(value = "recognise", produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<String> inputUrl(@RequestParam("myfile")MultipartFile image) {
+    LOGGER.debug("Received HTTP Request from the user");
     String output = imageRecognitionService.recognizeImage(image);
-    System.out.println("Output: "+ output);
     return new ResponseEntity<String>(output, HttpStatus.OK);
   }
 }
